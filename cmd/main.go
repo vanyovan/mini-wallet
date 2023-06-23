@@ -23,11 +23,13 @@ func main() {
 
 	userRepo := repo.NewUserRepo(db)
 	walletRepo := repo.NewWalletRepo(db)
+	transactionRepo := repo.NewTransactionRepo(db)
 
-	WalletUsecase := usecase.NewWalletService(userRepo, walletRepo)
+	walletUsecase := usecase.NewWalletService(userRepo, walletRepo)
 	userUsecase := usecase.NewUserService(userRepo)
+	transactionUsecase := usecase.NewTransactionService(userRepo, walletRepo, transactionRepo)
 
-	handler := handler.NewHandler(userUsecase, WalletUsecase)
+	handler := handler.NewHandler(userUsecase, walletUsecase, transactionUsecase)
 
 	router := chi.NewRouter()
 
@@ -36,6 +38,7 @@ func main() {
 	router.Group(func(r chi.Router) {
 		r.Use(middleware.AuthenticateUser(&userUsecase))
 		r.Method(http.MethodPost, "/api/v1/wallet", http.HandlerFunc(handler.HandleEnableWallet))
+		r.Method(http.MethodGet, "/api/v1/wallet", http.HandlerFunc(handler.HandlViewWallet))
 	})
 
 	server := &http.Server{

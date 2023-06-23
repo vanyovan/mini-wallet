@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/vanyovan/mini-wallet.git/internal/entity"
 	"github.com/vanyovan/mini-wallet.git/internal/helper"
 )
@@ -26,7 +27,7 @@ func (r *Repo) GetWalletByUserId(ctx context.Context, userId string) (result ent
 	query := "SELECT wallet_id, owned_by, status, enabled_at, disabled_at, balance FROM mst_wallet WHERE owned_by = ?"
 	row := r.db.QueryRow(query, userId)
 	result = entity.Wallet{}
-	err = row.Scan(&result.WalletId, &result.OwnedBy, &result.Balance, &result.Status, &result.EnabledAt, &result.DisabledAt)
+	err = row.Scan(&result.WalletId, &result.OwnedBy, &result.Status, &result.EnabledAt, &result.DisabledAt, &result.Balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return result, nil
@@ -45,9 +46,10 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 		return result, errors.New("failed to begin database transaction")
 	}
 
-	timeNow, _ := helper.ParseTime(time.Now(), helper.ConstantTimeParsed)
+	// timeNow, _ := helper.ParseTime(time.Now(), helper.ConstantTimeParsed)
+	guuid := generateGuuid()
 
-	_, err = tx.ExecContext(ctx, "INSERT INTO mst_wallet (wallet_id, owned_by, status, enabled_at, balance) VALUES (?, ?, ?, ?, ?)", userId, userId, helper.ConstantEnabled, timeNow, helper.ConstantDefaultInt)
+	_, err = tx.ExecContext(ctx, "INSERT INTO mst_wallet (wallet_id, owned_by, status, enabled_at, balance) VALUES (?, ?, ?, ?, ?)", guuid, userId, helper.ConstantEnabled, time.Now(), helper.ConstantDefaultInt)
 	if err != nil {
 		tx.Rollback()
 		return result, fmt.Errorf("failed to create wallet: %w", err)
@@ -59,4 +61,9 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 	}
 
 	return result, nil
+}
+
+func generateGuuid() string {
+	uuid := uuid.New()
+	return uuid.String()
 }

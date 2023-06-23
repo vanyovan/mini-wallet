@@ -16,6 +16,7 @@ type WalletService struct {
 
 type WalletServiceProvider interface {
 	CreateEnabledWallet(ctx context.Context, param entity.User) (result entity.Wallet, err error)
+	ViewWallet(ctx context.Context, param entity.User) (result entity.Wallet, err error)
 }
 
 func NewWalletService(UserRepo repo.UserRepo, WalletRepo repo.WalletRepo) WalletService {
@@ -29,10 +30,18 @@ func (uc *WalletService) CreateEnabledWallet(ctx context.Context, param entity.U
 	// get wallet. if there's wallet by this user, cannot create new wallet
 	result, err = uc.WalletRepo.GetWalletByUserId(ctx, param.CustomerXid)
 	if !helper.IsStructEmpty(result) {
-		return result, errors.New("wallet already exists. you dont need to enabled it again")
+		return result, errors.New("already enabled")
 	}
 
 	//create new wallet
 	result, err = uc.WalletRepo.CreateWallet(ctx, param.CustomerXid)
+	return result, err
+}
+
+func (uc *WalletService) ViewWallet(ctx context.Context, param entity.User) (result entity.Wallet, err error) {
+	result, err = uc.WalletRepo.GetWalletByUserId(ctx, param.CustomerXid)
+	if helper.IsStructEmpty(result) {
+		return result, errors.New("wallet disabled")
+	}
 	return result, err
 }

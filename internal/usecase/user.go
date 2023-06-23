@@ -44,5 +44,4 @@ func (uc *UserService) GetUserByToken(ctx context.Context, token string) (entity
 	}
 
 	return currentUser, nil
-
 }

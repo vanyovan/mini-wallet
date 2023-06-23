@@ -16,10 +16,10 @@ type User struct {
 }
 
 type Wallet struct {
-	WalletId   string    `json:"wallet_id"`
-	OwnedBy    string    `json:"owned_by"`
-	Status     string    `json:"status"`
-	EnabledAt  time.Time `json:"enabled_at"`
-	DisabledAt time.Time `json:"disabled_at ,omitempty"`
-	Balance    float64   `json:"balance"`
+	WalletId   string     `json:"wallet_id"`
+	OwnedBy    string     `json:"owned_by"`
+	Status     string     `json:"status"`
+	EnabledAt  *time.Time `json:"enabled_at,omitempty"`
+	DisabledAt *time.Time `json:"disabled_at,omitempty"`
+	Balance    float64    `json:"balance"`
 }
