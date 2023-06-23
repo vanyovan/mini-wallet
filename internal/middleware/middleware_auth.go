@@ -14,8 +14,8 @@ func AuthenticateUser(userService usecase.UserServiceProvider) func(next http.Ha
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authorization := strings.Split(r.Header.Get("Authorization"), "Token ")
-			if len(authorization) < 2 {
-				response.Failed(w, errors.New("authorization token invalid"))
+			if len(authorization) == 0 {
+				response.Failed(w, errors.New("token invalid"))
 				return
 			}
 
@@ -27,12 +27,11 @@ func AuthenticateUser(userService usecase.UserServiceProvider) func(next http.Ha
 				return
 			}
 			if helper.IsStructEmpty(currentUser) {
-				response.Failed(w, errors.New("authorization token invalid"))
+				response.Failed(w, errors.New("token invalid"))
 				return
 			}
 
 			ctx := helper.Inject(r.Context(), currentUser)
-
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

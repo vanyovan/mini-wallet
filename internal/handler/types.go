@@ -4,6 +4,6 @@ type InitWalletRequest struct {
 	CustomerXid string `json:"customer_xid"`
 }
 
-type InitWalletResponseData struct {
+type InitUserResponseData struct {
 	Token string `json:"token"`
 }

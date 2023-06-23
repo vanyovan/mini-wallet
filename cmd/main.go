@@ -17,21 +17,25 @@ import (
 func main() {
 	db, err := sql.Open("sqlite3", "../database.db")
 	if err != nil {
-		fmt.Println("MSK 17")
 		panic(err)
 	}
 	defer db.Close()
 
-	tokenRepo := repo.NewUserRepo(db)
-	tokenUsecase := usecase.NewUserService(tokenRepo)
-	handler := handler.NewHandler(tokenUsecase)
+	userRepo := repo.NewUserRepo(db)
+	walletRepo := repo.NewWalletRepo(db)
+
+	WalletUsecase := usecase.NewWalletService(userRepo, walletRepo)
+	userUsecase := usecase.NewUserService(userRepo)
+
+	handler := handler.NewHandler(userUsecase, WalletUsecase)
 
 	router := chi.NewRouter()
 
 	router.Method(http.MethodPost, "/api/v1/init", http.HandlerFunc(handler.HandleInitWallet))
 
 	router.Group(func(r chi.Router) {
-		r.Use(middleware.AuthenticateUser(&tokenUsecase))
+		r.Use(middleware.AuthenticateUser(&userUsecase))
+		r.Method(http.MethodPost, "/api/v1/wallet", http.HandlerFunc(handler.HandleEnableWallet))
 	})
 
 	server := &http.Server{

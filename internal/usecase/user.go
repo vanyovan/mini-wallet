@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/vanyovan/mini-wallet.git/internal/entity"
 	"github.com/vanyovan/mini-wallet.git/internal/helper"
@@ -15,7 +14,7 @@ type UserService struct {
 }
 
 type UserServiceProvider interface {
-	CreateUser(ctx context.Context, param entity.WalletRequestParam) (result entity.WalletResponse, err error)
+	CreateUser(ctx context.Context, param entity.UserRequestParam) (result entity.UserResponse, err error)
 	GetUserByToken(ctx context.Context, token string) (entity.User, error)
 }
 
@@ -25,7 +24,7 @@ func NewUserService(UserRepo repo.UserRepo) UserService {
 	}
 }
 
-func (uc *UserService) CreateUser(ctx context.Context, param entity.WalletRequestParam) (result entity.WalletResponse, err error) {
+func (uc *UserService) CreateUser(ctx context.Context, param entity.UserRequestParam) (result entity.UserResponse, err error) {
 	// find user, if user already exists return error
 	user, err := uc.UserRepo.GetUserByUserId(param.CustomerXid)
 	if !helper.IsStructEmpty(user) {
@@ -34,8 +33,7 @@ func (uc *UserService) CreateUser(ctx context.Context, param entity.WalletReques
 
 	// add database user and token
 	token, err := uc.UserRepo.CreateUser(ctx, param.CustomerXid)
-	fmt.Println("TOKEN", token)
-
+	result.Token = token
 	return result, err
 }
 

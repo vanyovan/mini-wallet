@@ -80,6 +80,7 @@ func (r *Repo) GetUserByToken(ctx context.Context, token string) (result entity.
 	}
 	return result, nil
 }
+
 func generateToken() string {
 	token := make([]byte, 16)
 	if _, err := rand.Read(token); err != nil {
