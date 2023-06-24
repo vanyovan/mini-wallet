@@ -33,15 +33,23 @@ func (uc *WalletService) CreateEnabledWallet(ctx context.Context, param entity.U
 		return result, errors.New("already enabled")
 	}
 
+	if err != nil {
+		return result, err
+	}
+
 	//create new wallet
 	result, err = uc.WalletRepo.CreateWallet(ctx, param.CustomerXid)
+	if err != nil {
+		return result, err
+	}
 	return result, err
 }
 
 func (uc *WalletService) ViewWallet(ctx context.Context, param entity.User) (result entity.Wallet, err error) {
 	result, err = uc.WalletRepo.GetWalletByUserId(ctx, param.CustomerXid)
-	if helper.IsStructEmpty(result) {
+	if helper.IsStructEmpty(result) || result.Status == helper.ConstantDisabled {
 		return result, errors.New("wallet disabled")
 	}
+
 	return result, err
 }

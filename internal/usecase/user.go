@@ -31,6 +31,10 @@ func (uc *UserService) CreateUser(ctx context.Context, param entity.UserRequestP
 		return result, errors.New("user already exists")
 	}
 
+	if err != nil {
+		return result, err
+	}
+
 	// add database user and token
 	token, err := uc.UserRepo.CreateUser(ctx, param.CustomerXid)
 	result.Token = token

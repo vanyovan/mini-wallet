@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/vanyovan/mini-wallet.git/internal/entity"
 	"github.com/vanyovan/mini-wallet.git/internal/helper"
 )
@@ -45,9 +44,7 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 		tx.Rollback()
 		return result, errors.New("failed to begin database transaction")
 	}
-
-	// timeNow, _ := helper.ParseTime(time.Now(), helper.ConstantTimeParsed)
-	guuid := generateGuuid()
+	guuid := helper.GenerateGuuid()
 
 	_, err = tx.ExecContext(ctx, "INSERT INTO mst_wallet (wallet_id, owned_by, status, enabled_at, balance) VALUES (?, ?, ?, ?, ?)", guuid, userId, helper.ConstantEnabled, time.Now(), helper.ConstantDefaultInt)
 	if err != nil {
@@ -61,9 +58,4 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 	}
 
 	return result, nil
-}
-
-func generateGuuid() string {
-	uuid := uuid.New()
-	return uuid.String()
 }

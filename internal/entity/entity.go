@@ -23,3 +23,27 @@ type Wallet struct {
 	DisabledAt *time.Time `json:"disabled_at,omitempty"`
 	Balance    float64    `json:"balance"`
 }
+
+type TransactionRequest struct {
+	Amount      float64 `json:"amount"`
+	ReferenceId string  `json:"reference_id"`
+}
+
+type DepositResponse struct {
+	Id          string     `json:"id"`
+	DepositedBy string     `json:"deposit_by"`
+	Status      string     `json:"status"`
+	DepositedAt *time.Time `json:"deposited_at"`
+	Amount      float64    `json:"amount"`
+	ReferenceId string     `json:"reference_id"`
+}
+
+type Transaction struct {
+	WalletId      string     `json:"wallet_id" db:"wallet_id"`
+	TransactionId string     `json:"transaction_id" db:"transaction_id"`
+	Status        string     `json:"status" db:"status"`
+	TransactedAt  *time.Time `json:"transacted_at" db:"transacted_at"`
+	Type          string     `json:"type" db:"type"`
+	Amount        float64    `json:"amount" db:"amount"`
+	ReferenceId   string     `json:"reference_id" db:"reference_id"`
+}
