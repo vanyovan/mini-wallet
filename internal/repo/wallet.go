@@ -9,6 +9,7 @@ import (
 
 	"github.com/vanyovan/mini-wallet.git/internal/entity"
 	"github.com/vanyovan/mini-wallet.git/internal/helper"
+	"github.com/vanyovan/mini-wallet.git/internal/repo/wrapper"
 )
 
 type WalletRepo interface {
@@ -39,10 +40,13 @@ func (r *Repo) GetWalletByUserId(ctx context.Context, userId string) (result ent
 }
 
 func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.Wallet, err error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		tx.Rollback()
-		return result, errors.New("failed to begin database transaction")
+	tx, err := wrapper.FromContext(ctx)
+	if tx == nil || err != nil {
+		tx, err = r.db.Begin()
+		if err != nil {
+			tx.Rollback()
+			return result, errors.New("failed to begin database transaction")
+		}
 	}
 	guuid := helper.GenerateGuuid()
 

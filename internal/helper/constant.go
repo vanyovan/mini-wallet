@@ -3,6 +3,7 @@ package helper
 type key string
 
 var userKey = key("user_context")
+var TxKey = key("tx_context")
 
 var (
 	ConstantEnabled    = "enabled"

@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/vanyovan/mini-wallet.git/internal/entity"
+	"github.com/vanyovan/mini-wallet.git/internal/repo/wrapper"
 )
 
 type Repo struct {
@@ -28,10 +29,13 @@ func NewUserRepo(db *sql.DB) UserRepo {
 }
 
 func (r *Repo) CreateUser(ctx context.Context, userId string) (token string, err error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		tx.Rollback()
-		return "", errors.New("failed to begin database transaction")
+	tx, err := wrapper.FromContext(ctx)
+	if tx == nil || err != nil {
+		tx, err = r.db.Begin()
+		if err != nil {
+			tx.Rollback()
+			return "", errors.New("failed to begin database transaction")
+		}
 	}
 
 	//generate token

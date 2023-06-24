@@ -32,6 +32,8 @@ func (h *Handler) HandleInitWallet(w http.ResponseWriter, r *http.Request) {
 	request := InitWalletRequest{}
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -42,6 +44,8 @@ func (h *Handler) HandleInitWallet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if request.CustomerXid == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -58,6 +62,8 @@ func (h *Handler) HandleInitWallet(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.UserUsecase.CreateUser(context.TODO(), param)
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -67,8 +73,8 @@ func (h *Handler) HandleInitWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   result,
@@ -78,6 +84,8 @@ func (h *Handler) HandleInitWallet(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HandleEnableWallet(w http.ResponseWriter, r *http.Request) {
 	currentUser, err := helper.FromContext(r.Context())
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -89,8 +97,8 @@ func (h *Handler) HandleEnableWallet(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.WalletUsecase.CreateEnabledWallet(r.Context(), currentUser)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -100,8 +108,8 @@ func (h *Handler) HandleEnableWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   result,
@@ -111,6 +119,8 @@ func (h *Handler) HandleEnableWallet(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HandleViewWallet(w http.ResponseWriter, r *http.Request) {
 	currentUser, err := helper.FromContext(r.Context())
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -122,8 +132,8 @@ func (h *Handler) HandleViewWallet(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.WalletUsecase.ViewWallet(r.Context(), currentUser)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -133,17 +143,57 @@ func (h *Handler) HandleViewWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   result,
 	})
 }
 
+func (h *Handler) HandleViewTransaction(w http.ResponseWriter, r *http.Request) {
+	currentUser, err := helper.FromContext(r.Context())
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "fail",
+			"data": map[string]interface{}{
+				"error": err.Error(),
+			},
+		})
+		return
+
+	}
+
+	result, err := h.TransactionUsecase.ViewWalletTransaction(r.Context(), currentUser)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "fail",
+			"data": map[string]interface{}{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	// w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "success",
+		"data": map[string]interface{}{
+			"transactions": result,
+		},
+	})
+}
+
 func (h *Handler) HandleDepositWallet(w http.ResponseWriter, r *http.Request) {
 	currentUser, err := helper.FromContext(r.Context())
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
@@ -158,6 +208,8 @@ func (h *Handler) HandleDepositWallet(w http.ResponseWriter, r *http.Request) {
 	request := TransactionRequest{}
 	err = json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -174,8 +226,8 @@ func (h *Handler) HandleDepositWallet(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.TransactionUsecase.CreateDepositWallet(r.Context(), currentUser, param)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -185,32 +237,19 @@ func (h *Handler) HandleDepositWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   result,
 	})
 }
 
-func (h *Handler) HandleViewTransaction(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleWithdrawalWallet(w http.ResponseWriter, r *http.Request) {
 	currentUser, err := helper.FromContext(r.Context())
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status": "fail",
-			"data": map[string]interface{}{
-				"error": err.Error(),
-			},
-		})
-		return
-
-	}
-
-	result, err := h.TransactionUsecase.ViewWalletTransaction(r.Context(), currentUser)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status": "fail",
 			"data": map[string]interface{}{
@@ -220,12 +259,42 @@ func (h *Handler) HandleViewTransaction(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	request := TransactionRequest{}
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "fail",
+			"data": map[string]interface{}{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
+	param := entity.TransactionRequest{
+		Amount:      request.Amount,
+		ReferenceId: request.ReferenceId,
+	}
+
+	result, err := h.TransactionUsecase.CreateWithdrawalWallet(r.Context(), currentUser, param)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "fail",
+			"data": map[string]interface{}{
+				"error": err.Error(),
+			},
+		})
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
-		"data": map[string]interface{}{
-			"transactions": result,
-		},
+		"data":   result,
 	})
 }
