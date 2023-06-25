@@ -14,6 +14,7 @@ import (
 
 type WalletRepo interface {
 	CreateWallet(ctx context.Context, userId string) (result entity.Wallet, err error)
+	UpdateDisableWalletByUserId(ctx context.Context, userId string) (result entity.Wallet, err error)
 	GetWalletByUserId(ctx context.Context, userId string) (result entity.Wallet, err error)
 }
 
@@ -54,6 +55,30 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 	if err != nil {
 		tx.Rollback()
 		return result, fmt.Errorf("failed to create wallet: %w", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return result, errors.New("failed to commit database transaction")
+	}
+
+	return result, nil
+}
+
+func (r *Repo) UpdateDisableWalletByUserId(ctx context.Context, userId string) (result entity.Wallet, err error) {
+	tx, err := wrapper.FromContext(ctx)
+	if tx == nil || err != nil {
+		tx, err = r.db.Begin()
+		if err != nil {
+			tx.Rollback()
+			return result, errors.New("failed to begin database transaction")
+		}
+	}
+
+	_, err = tx.Exec("UPDATE mst_wallet set status = ?, disabled_at = ? where owned_by = ?", helper.ConstantDisabled, time.Now(), userId)
+	if err != nil {
+		tx.Rollback()
+		return result, fmt.Errorf("failed to update wallet: %w", err)
 	}
 	err = tx.Commit()
 	if err != nil {

@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", getAppRootDirectory()+"/database.db")
+	db, err := sql.Open("sqlite3", getRootDirectory()+"/database.db")
 	if err != nil {
 		panic(err)
 	}
@@ -46,6 +46,7 @@ func main() {
 		r.Method(http.MethodGet, "/api/v1/wallet/transactions", http.HandlerFunc(handler.HandleViewTransaction))  //view transaction
 		r.Method(http.MethodPost, "/api/v1/wallet/deposits", http.HandlerFunc(handler.HandleDepositWallet))       //deposit wallet
 		r.Method(http.MethodPost, "/api/v1/wallet/withdrawals", http.HandlerFunc(handler.HandleWithdrawalWallet)) //withdraw wallet
+		r.Method(http.MethodPatch, "/api/v1/wallet", http.HandlerFunc(handler.HandleDisableWallet))               //disable wallet
 	})
 
 	server := &http.Server{
@@ -57,7 +58,7 @@ func main() {
 	server.ListenAndServe()
 }
 
-func getAppRootDirectory() string {
+func getRootDirectory() string {
 	projectName := regexp.MustCompile(`^(.*mini-wallet)`)
 	currentWorkDirectory, _ := os.Getwd()
 	rootPath := projectName.Find([]byte(currentWorkDirectory))
