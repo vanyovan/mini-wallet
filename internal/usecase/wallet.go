@@ -30,18 +30,24 @@ func NewWalletService(UserRepo repo.UserRepo, WalletRepo repo.WalletRepo) Wallet
 func (uc *WalletService) CreateEnableWallet(ctx context.Context, param entity.User) (result entity.Wallet, err error) {
 	// get wallet. if there's wallet by this user, cannot create new wallet
 	result, err = uc.WalletRepo.GetWalletByUserId(ctx, param.CustomerXid)
-	if !helper.IsStructEmpty(result) {
+	if !helper.IsStructEmpty(result) && result.Status == helper.ConstantEnabled {
 		return result, errors.New("already enabled")
 	}
 
-	if err != nil {
-		return result, err
-	}
-
-	//create new wallet
-	result, err = uc.WalletRepo.CreateWallet(ctx, param.CustomerXid)
-	if err != nil {
-		return result, err
+	if result.Status == helper.ConstantDisabled {
+		//has to update the wallet to enable
+		updatedAt, err := uc.WalletRepo.UpdateStatusByUserId(ctx, helper.ConstantEnabled, param.CustomerXid)
+		if err != nil {
+			return result, err
+		}
+		result.Status = helper.ConstantEnabled
+		result.EnabledAt = &updatedAt
+	} else {
+		//create new wallet
+		result, err = uc.WalletRepo.CreateWallet(ctx, param.CustomerXid)
+		if err != nil {
+			return result, err
+		}
 	}
 	return result, err
 }
@@ -58,10 +64,14 @@ func (uc *WalletService) CreateDisableWallet(ctx context.Context, param entity.U
 	}
 
 	//disable wallet
-	result, err = uc.WalletRepo.UpdateDisableWalletByUserId(ctx, param.CustomerXid)
+	updatedAt, err := uc.WalletRepo.UpdateStatusByUserId(ctx, helper.ConstantDisabled, param.CustomerXid)
 	if err != nil {
 		return result, err
 	}
+
+	result.Status = helper.ConstantDisabled
+	result.DisabledAt = &updatedAt
+
 	return result, err
 }
 

@@ -20,7 +20,7 @@ func AuthenticateUser(userService usecase.UserServiceProvider) func(next http.Ha
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"status": "fail",
 					"data": map[string]interface{}{
-						"error": errors.New("token invalid"),
+						"error": errors.New("token invalid").Error(),
 					},
 				})
 				return
@@ -35,7 +35,7 @@ func AuthenticateUser(userService usecase.UserServiceProvider) func(next http.Ha
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"status": "fail",
 					"data": map[string]interface{}{
-						"error": errors.New("token invalid"),
+						"error": errors.New("token invalid").Error(),
 					},
 				})
 				return

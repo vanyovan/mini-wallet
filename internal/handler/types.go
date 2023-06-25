@@ -1,5 +1,6 @@
 package handler
 
+// to store all request
 type InitWalletRequest struct {
 	CustomerXid string `json:"customer_xid"`
 }

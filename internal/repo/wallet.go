@@ -14,7 +14,7 @@ import (
 
 type WalletRepo interface {
 	CreateWallet(ctx context.Context, userId string) (result entity.Wallet, err error)
-	UpdateDisableWalletByUserId(ctx context.Context, userId string) (result entity.Wallet, err error)
+	UpdateStatusByUserId(ctx context.Context, status string, userId string) (updatedAt time.Time, err error)
 	GetWalletByUserId(ctx context.Context, userId string) (result entity.Wallet, err error)
 }
 
@@ -50,8 +50,8 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 		}
 	}
 	guuid := helper.GenerateGuuid()
-
-	_, err = tx.ExecContext(ctx, "INSERT INTO mst_wallet (wallet_id, owned_by, status, enabled_at, balance) VALUES (?, ?, ?, ?, ?)", guuid, userId, helper.ConstantEnabled, time.Now(), helper.ConstantDefaultInt)
+	timeNow := time.Now()
+	_, err = tx.ExecContext(ctx, "INSERT INTO mst_wallet (wallet_id, owned_by, status, enabled_at, balance) VALUES (?, ?, ?, ?, ?)", guuid, userId, helper.ConstantEnabled, timeNow, helper.ConstantDefaultFloat64)
 	if err != nil {
 		tx.Rollback()
 		return result, fmt.Errorf("failed to create wallet: %w", err)
@@ -62,29 +62,41 @@ func (r *Repo) CreateWallet(ctx context.Context, userId string) (result entity.W
 		return result, errors.New("failed to commit database transaction")
 	}
 
+	result = entity.Wallet{
+		WalletId:  guuid,
+		OwnedBy:   userId,
+		Status:    helper.ConstantEnabled,
+		EnabledAt: &timeNow,
+		Balance:   helper.ConstantDefaultFloat64,
+	}
 	return result, nil
 }
 
-func (r *Repo) UpdateDisableWalletByUserId(ctx context.Context, userId string) (result entity.Wallet, err error) {
+func (r *Repo) UpdateStatusByUserId(ctx context.Context, status string, userId string) (updatedAt time.Time, err error) {
 	tx, err := wrapper.FromContext(ctx)
 	if tx == nil || err != nil {
 		tx, err = r.db.Begin()
 		if err != nil {
 			tx.Rollback()
-			return result, errors.New("failed to begin database transaction")
+			return time.Time{}, errors.New("failed to begin database transaction")
 		}
 	}
 
-	_, err = tx.Exec("UPDATE mst_wallet set status = ?, disabled_at = ? where owned_by = ?", helper.ConstantDisabled, time.Now(), userId)
+	timeNow := time.Now()
+	if status == helper.ConstantEnabled {
+		_, err = tx.Exec("UPDATE mst_wallet set status = ?, enabled_at = ? where owned_by = ?", status, timeNow, userId)
+	} else {
+		_, err = tx.Exec("UPDATE mst_wallet set status = ?, disabled_at = ? where owned_by = ?", status, timeNow, userId)
+	}
 	if err != nil {
 		tx.Rollback()
-		return result, fmt.Errorf("failed to update wallet: %w", err)
+		return time.Time{}, fmt.Errorf("failed to update wallet: %w", err)
 	}
 	err = tx.Commit()
 	if err != nil {
 		tx.Rollback()
-		return result, errors.New("failed to commit database transaction")
+		return time.Time{}, errors.New("failed to commit database transaction")
 	}
 
-	return result, nil
+	return timeNow, nil
 }
