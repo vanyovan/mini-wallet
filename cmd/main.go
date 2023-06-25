@@ -37,7 +37,7 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Method(http.MethodPost, "/api/v1/init", http.HandlerFunc(handler.HandleInitWallet))
+	router.Method(http.MethodPost, "/api/v1/init", http.HandlerFunc(handler.HandleInitWallet)) //init user
 
 	router.Group(func(r chi.Router) {
 		r.Use(middleware.AuthenticateUser(&userUsecase))

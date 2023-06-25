@@ -313,7 +313,7 @@ func (h *Handler) HandleDisableWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.WalletUsecase.CreateEnableWallet(r.Context(), currentUser)
+	result, err := h.WalletUsecase.CreateDisableWallet(r.Context(), currentUser)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
