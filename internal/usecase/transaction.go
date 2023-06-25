@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/vanyovan/mini-wallet.git/internal/entity"
@@ -19,9 +20,9 @@ type TransactionService struct {
 }
 
 type TransactionServiceProvider interface {
-	CreateDepositWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.Wallet, err error)
+	CreateDepositWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.DepositResponse, err error)
 	ViewWalletTransaction(ctx context.Context, user entity.User) (result entity.Transaction, err error)
-	CreateWithdrawalWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.Wallet, err error)
+	CreateWithdrawalWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.WithdrawalResponse, err error)
 }
 
 func NewTransactionService(UserRepo repo.UserRepo, WalletRepo repo.WalletRepo, TransactionRepo repo.TransactionRepo, SqlWrapper wrapper.SqlWrapper) TransactionService {
@@ -33,7 +34,7 @@ func NewTransactionService(UserRepo repo.UserRepo, WalletRepo repo.WalletRepo, T
 	}
 }
 
-func (uc *TransactionService) CreateDepositWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.Wallet, err error) {
+func (uc *TransactionService) CreateDepositWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.DepositResponse, err error) {
 	// get wallet
 	wallet, err := uc.WalletRepo.GetWalletByUserId(ctx, user.CustomerXid)
 	if helper.IsStructEmpty(wallet) || wallet.Status == helper.ConstantDisabled {
@@ -49,10 +50,10 @@ func (uc *TransactionService) CreateDepositWallet(ctx context.Context, user enti
 	wallet.Balance = wallet.Balance + param.Amount
 
 	//insert transaction with success status
-	transactionId, err := uc.TransactionRepo.CreateWalletTransaction(ctx, wallet.WalletId, status, helper.ConstantDeposit, param.Amount, param.ReferenceId)
+	transactionId, transactedAt, err := uc.TransactionRepo.CreateWalletTransaction(ctx, wallet.WalletId, status, helper.ConstantDeposit, param.Amount, param.ReferenceId)
 	if err != nil {
 		status = helper.ConstantFailed
-		return wallet, err
+		return result, err
 	}
 
 	go func() {
@@ -71,10 +72,19 @@ func (uc *TransactionService) CreateDepositWallet(ctx context.Context, user enti
 		})
 	}()
 
-	return wallet, err
+	result = entity.DepositResponse{
+		Id:          transactionId,
+		DepositedBy: user.CustomerXid,
+		Status:      status,
+		DepositedAt: &transactedAt,
+		Amount:      param.Amount,
+		ReferenceId: param.ReferenceId,
+	}
+
+	return result, err
 }
 
-func (uc *TransactionService) CreateWithdrawalWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.Wallet, err error) {
+func (uc *TransactionService) CreateWithdrawalWallet(ctx context.Context, user entity.User, param entity.TransactionRequest) (result entity.WithdrawalResponse, err error) {
 	// get wallet
 	wallet, err := uc.WalletRepo.GetWalletByUserId(ctx, user.CustomerXid)
 	if helper.IsStructEmpty(wallet) || wallet.Status == helper.ConstantDisabled {
@@ -94,10 +104,11 @@ func (uc *TransactionService) CreateWithdrawalWallet(ctx context.Context, user e
 	wallet.Balance = wallet.Balance - param.Amount
 
 	//insert transaction with success status
-	transactionId, err := uc.TransactionRepo.CreateWalletTransaction(ctx, wallet.WalletId, status, helper.ConstantDeposit, param.Amount, param.ReferenceId)
+	transactionId, transactedAt, err := uc.TransactionRepo.CreateWalletTransaction(ctx, wallet.WalletId, status, helper.ConstantDeposit, param.Amount, param.ReferenceId)
+	fmt.Println(transactedAt)
 	if err != nil {
 		status = helper.ConstantFailed
-		return wallet, err
+		return result, err
 	}
 
 	go func() {
@@ -115,7 +126,16 @@ func (uc *TransactionService) CreateWithdrawalWallet(ctx context.Context, user e
 			return nil
 		})
 	}()
-	return wallet, err
+
+	result = entity.WithdrawalResponse{
+		Id:          transactionId,
+		WithdrawBy:  user.CustomerXid,
+		Status:      status,
+		WithdrawAt:  &transactedAt,
+		Amount:      param.Amount,
+		ReferenceId: param.ReferenceId,
+	}
+	return result, err
 }
 
 func (uc *TransactionService) ViewWalletTransaction(ctx context.Context, user entity.User) (result []entity.Transaction, err error) {

@@ -14,7 +14,7 @@ import (
 
 type TransactionRepo interface {
 	UpdateWalletBalanceByUserId(ctx context.Context, amount float64, userId string) (err error)
-	CreateWalletTransaction(ctx context.Context, walletId string, status string, typeTransaction string, amount float64, referenceId string) (transactionId string, err error)
+	CreateWalletTransaction(ctx context.Context, walletId string, status string, typeTransaction string, amount float64, referenceId string) (transactionId string, transactedAt time.Time, err error)
 	GetTransactionByWalletId(walletId string) (result []entity.Transaction, err error)
 	UpdateTransactionStatusByTransactionId(ctx context.Context, status string, transactionId string) (err error)
 }
@@ -49,29 +49,30 @@ func (r *Repo) UpdateWalletBalanceByUserId(ctx context.Context, amount float64, 
 	return nil
 }
 
-func (r *Repo) CreateWalletTransaction(ctx context.Context, walletId string, status string, typeTransaction string, amount float64, referenceId string) (transactionId string, err error) {
+func (r *Repo) CreateWalletTransaction(ctx context.Context, walletId string, status string, typeTransaction string, amount float64, referenceId string) (transactionId string, transactedAt time.Time, err error) {
 	tx, err := wrapper.FromContext(ctx)
 	if tx == nil || err != nil {
 		tx, err = r.db.Begin()
 		if err != nil {
 			tx.Rollback()
-			return "", errors.New("failed to begin database transaction")
+			return "", time.Time{}, errors.New("failed to begin database transaction")
 		}
 	}
 
 	guuid := helper.GenerateGuuid()
-	_, err = tx.ExecContext(ctx, "INSERT INTO trx_wallet (wallet_id, transaction_id, status, transacted_at, type, amount, reference_id) VALUES (?, ?, ?, ?, ?, ?, ?)", walletId, guuid, status, time.Now(), typeTransaction, amount, referenceId)
+	timeNow := time.Now()
+	_, err = tx.ExecContext(ctx, "INSERT INTO trx_wallet (wallet_id, transaction_id, status, transacted_at, type, amount, reference_id) VALUES (?, ?, ?, ?, ?, ?, ?)", walletId, guuid, status, timeNow, typeTransaction, amount, referenceId)
 	if err != nil {
 		tx.Rollback()
-		return "", fmt.Errorf("failed to create user: %w", err)
+		return "", time.Time{}, fmt.Errorf("failed to create user: %w", err)
 	}
 	err = tx.Commit()
 	if err != nil {
 		tx.Rollback()
-		return "", errors.New("failed to commit database transaction")
+		return "", time.Time{}, errors.New("failed to commit database transaction")
 	}
 
-	return guuid, nil
+	return guuid, timeNow, nil
 }
 
 func (r *Repo) GetTransactionByWalletId(walletId string) (result []entity.Transaction, err error) {
