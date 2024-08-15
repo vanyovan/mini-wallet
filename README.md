@@ -12,7 +12,7 @@ Mini Wallet is a simple wallet management system that allows users to perform op
 
 ## Installation
 
-git clone https://github.com/your-username/mini-wallet.git
+git clone https://github.com/vanyovan/mini-wallet.git
 
 ## Getting Started
 
